@@ -1,5 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 from wordcloud import WordCloud
 import seaborn as sb
@@ -17,46 +16,21 @@ data = data.drop(columns={'Comment'})
 # Loại bỏ các dòng có giá trị NaN trong cột 'Comment Tokenize'
 data.dropna(subset=['Comment Tokenize'], inplace=True)
 
-# Lấy cột 'Comment Tokenize'
+# Lấy cột 'Comment Tokenize<tab<tab>>
 text = data['Comment Tokenize']
 
-# Import TfidfVectorizer
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-# Thiết lập các tham số
+# Thiết lập và fit vectorizer
 tfidf = TfidfVectorizer(
     ngram_range=(1, 3),
     min_df=0.02,
     max_df=0.9
 )
+text_transformed = tfidf.fit_transform(text)
 
-# Fit vectorizer
-tfidf.fit(text)
+# Tạo DataFrame từ text_transformed
+df_text = pd.DataFrame(text_transformed.toarray(), columns=tfidf.get_feature_names_out())
 
-# Chuyển đổi dữ liệu
-text = tfidf.transform(text)
-
-# Tạo DataFrame df_text
-df_text = pd.DataFrame(text.toarray(), columns=tfidf.get_feature_names_out())
-
-# Tạo DataFrame hiển thị số lần xuất hiện của mỗi từ khóa trong DataFrame df_text
-lst_value = []
-lst_name = []
-
-# Lặp qua từng cột trong df_text
-for col in df_text.columns:
-    # Đếm số lần xuất hiện của các giá trị lớn hơn 0 trong từng cột và tính tổng
-    value = df_text[df_text[col] > 0][col].value_counts().sum()
-    lst_value.append(value)
-    lst_name.append(col)
-
-# Tạo DataFrame word_important
-word_important = pd.DataFrame({'KeyWord': lst_name, 'Count': lst_value})
-
-# Sắp xếp DataFrame word_important theo cột 'Count' giảm dần
-word_important.sort_values(by='Count', ascending=False, inplace=True)
-
-# Tạo danh sách các từ khóa thuộc nhóm Positive
+# Tạo danh sách các từ khóa tích cực và tiêu cực
 positive_words = [
     "thích", "tốt", "xuất sắc", "tuyệt vời", "tuyệt hảo", "đẹp", "ổn", "ngon",
     "hài lòng", "ưng ý", "hoàn hảo", "chất lượng", "thú vị", "nhanh",
@@ -74,7 +48,6 @@ positive_words = [
     "quán ngon", "ủng_hộ", "khen", "dài_dài", "tin_tưởng"
 ]
 
-# Tạo danh sách các từ khóa thuộc nhóm Negative
 negative_words = [
     "kém", "tệ", "đau", "xấu", "không", "dở", "ức",
     "buồn", "rối", "thô", "lâu", "chán", "tối", "chán", "ít", "mờ", "mỏng",
@@ -95,39 +68,17 @@ negative_words = [
 data['Positive Count'] = data['Comment Tokenize'].apply(lambda x: sum(x.lower().count(word) for word in positive_words))
 data['Negative Count'] = data['Comment Tokenize'].apply(lambda x: sum(x.lower().count(word) for word in negative_words))
 
-# Lọc ra các bài đánh giá có 'Positive Count' và 'Negative Count' khác 0
-positive_reviews = data[data['Positive Count'] > 0]
-negative_reviews = data[data['Negative Count'] > 0]
+# Xác định đánh giá là Positive, Negative hoặc Neutral
+def classify_sentiment(row):
+    if row['Positive Count'] > row['Negative Count']:
+        return 'Positive'
+    elif row['Negative Count'] > row['Positive Count']:
+        return 'Negative'
+    else:
+        return 'Neutral'
+
+# Tạo cột 'Label' dựa trên hàm classify_sentiment
+data['Label'] = data.apply(classify_sentiment, axis=1)
+
+# Lưu dữ liệu đã được xử lý vào file CSV
 data.to_csv('data_cleaned/data_analysis.csv', index=False)
-
-# Tạo biểu đồ WordCloud cho các bài đánh giá tích cực
-positive_text = ' '.join(positive_reviews['Comment Tokenize'])
-wordcloud_positive = WordCloud(width=800, height=400, background_color='white', colormap='viridis').generate(positive_text)
-
-# Tạo biểu đồ WordCloud cho các bài đánh giá tiêu cực
-negative_text = ' '.join(negative_reviews['Comment Tokenize'])
-wordcloud_negative = WordCloud(width=800, height=400, background_color='white', colormap='plasma').generate(negative_text)
-
-# Hiển thị biểu đồ WordCloud
-plt.figure(figsize=(15, 8))
-plt.subplot(1, 2, 1)
-plt.imshow(wordcloud_positive, interpolation='bilinear')
-plt.title('Word Cloud - Positive Reviews')
-plt.axis('off')
-
-plt.subplot(1, 2, 2)
-plt.imshow(wordcloud_negative, interpolation='bilinear')
-plt.title('Word Cloud - Negative Reviews')
-plt.axis('off')
-
-plt.tight_layout()
-plt.show()
-
-# Biểu đồ phân bố số lượng từ tích cực và tiêu cực
-plt.figure(figsize=(10, 6))
-sb.histplot(data['Positive Count'], bins=20, color='blue', kde=True, label='Positive Count')
-sb.histplot(data['Negative Count'], bins=20, color='red', kde=True, label='Negative Count')
-plt.title('Distribution of Positive and Negative Counts')
-plt.xlabel('Count')
-plt.legend()
-plt.show()

@@ -53,10 +53,4 @@ highest_price_median = restaurants['Highest Price'].median()
 print(f"\nTrung vị của Giá thấp nhất: {lowest_price_median}")
 print(f"Trung vị của Giá cao nhất: {highest_price_median}")
 
-# Vẽ biểu đồ histogram
-plt.figure(figsize=(15, 5))
-plt.subplot(1, 2, 1)
-sb.histplot(data=restaurants, x='Lowest Price', color='#FBAB4A')
-plt.subplot(1, 2, 2)
-sb.histplot(data=restaurants, x='Highest Price', color='#FBAB4A')
-plt.show()
+
