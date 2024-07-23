@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, render_template
+from flasgger import Swagger
 from flask_cors import CORS
 import pickle
 import pandas as pd
@@ -13,6 +14,7 @@ warnings.filterwarnings('ignore')
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all domains
+swagger = Swagger(app)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -119,6 +121,28 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
+    """
+    Endpoint to predict sentiment of a given text.
+    ---
+    parameters:
+      - name: text
+        in: body
+        type: string
+        required: true
+        description: Text to analyze for sentiment
+    responses:
+      200:
+        description: A JSON object with the prediction result
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              Comment:
+                type: string
+              Label:
+                type: string
+    """
     try:
         content = request.json  # Get JSON data from request
         text = content.get('text')  # Access 'text' key from JSON data

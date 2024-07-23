@@ -113,4 +113,4 @@ results.reset_index(drop=True, inplace=True)
 print(results)
 
 # Lưu kết quả đánh giá các mô hình vào tệp CSV
-results.to_csv('model/model_evaluation_results.csv', index=False)
+results.to_csv('models/model_evaluation_results.csv', index=False)

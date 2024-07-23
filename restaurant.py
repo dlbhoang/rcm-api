@@ -1,8 +1,5 @@
-# Import các thư viện cần thiết
 import pandas as pd
-import numpy as np
-import seaborn as sb
-import matplotlib.pyplot as plt
+from sqlalchemy import create_engine
 
 # Đọc dữ liệu từ file CSV
 restaurants = pd.read_csv('data/restaurant.csv')
@@ -36,21 +33,13 @@ restaurants = restaurants.sort_values(by='RestaurantID')
 # Chuyển đổi kiểu dữ liệu của RestaurantID sang object (chuỗi)
 restaurants['RestaurantID'] = restaurants['RestaurantID'].astype(str)
 
-# Xóa cột Price và lưu vào file CSV
+# Xóa cột Price
 restaurants = restaurants.drop(columns='Price')
-restaurants.to_csv('data_cleaned/restaurant_cleaned.csv', index=False)
 
-# Hiển thị một số dữ liệu và biểu đồ thống kê
-print("Thông tin sau khi xử lý:")
-print(restaurants.info())
-print("\nMột số mẫu dữ liệu:")
-print(restaurants.head())
+# Tạo kết nối đến MySQL
+engine = create_engine('mysql+pymysql://root:root1234@localhost/rcm')
 
-# Tính giá trị trung vị của Lowest Price và Highest Price
-lowest_price_median = restaurants['Lowest Price'].median()
-highest_price_median = restaurants['Highest Price'].median()
+# Lưu dữ liệu vào bảng 'restaurants' trong MySQL
+restaurants.to_sql('restaurants', con=engine, if_exists='replace', index=False)
 
-print(f"\nTrung vị của Giá thấp nhất: {lowest_price_median}")
-print(f"Trung vị của Giá cao nhất: {highest_price_median}")
-
-
+print("Dữ liệu đã được lưu vào MySQL thành công.")
